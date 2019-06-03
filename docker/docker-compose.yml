@@ -1,0 +1,87 @@
+version: '3'
+services:
+
+    cntnr_laravelfeap_nginx:
+        image: nginx:latest
+        container_name: laravelfeap_nginx
+        hostname: laravelfeap_nginx
+        restart: always
+        depends_on:
+            - cntnr_laravelfeap_php
+            - cntnr_laravelfeap_mysql
+        links:
+            - cntnr_laravelfeap_php
+        ports:
+            - '8010:80'
+        volumes:
+            - '../htdocs:/var/www/html'
+            - './nginx/nginx.conf:/etc/nginx/nginx.conf'
+            - './nginx/default.conf:/etc/nginx/conf.d/default.conf'
+     
+    cntnr_laravelfeap_php:
+        build: php
+        container_name: laravelfeap_php
+        hostname: laravelfeap_php
+        restart: always
+        links:
+            - cntnr_laravelfeap_mysql
+            - cntnr_laravelfeap_phpmyadmin
+            - cntnr_laravelfeap_redis
+            - cntnr_laravelfeap_memcached
+        volumes:
+            - '../htdocs:/var/www/html'
+            - './php/php.ini:/usr/local/etc/php/php.ini'
+        ports:
+            - '8011:9000'
+    
+    cntnr_laravelfeap_mysql:
+        image: mysql:8.0
+        container_name: laravelfeap_mysql
+        hostname: laravelfeap_mysql
+        restart: always
+        command: '--default-authentication-plugin=mysql_native_password'
+        volumes:
+            - './mysql/data:/var/lib/mysql'
+        ports:
+            - '8012:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: root_password
+            MYSQL_DATABASE: db_laravelfeaprjct
+            MYSQL_USER: user_laravelfeap
+            MYSQL_PASSWORD: password_laravelfeap
+    
+    cntnr_laravelfeap_phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: laravelfeap_phpmyadmin
+        hostname: laravelfeap_phpmyadmin
+        restart: always
+        depends_on:
+            - cntnr_laravelfeap_mysql
+        links:
+            - cntnr_laravelfeap_mysql
+        ports:
+            - '8013:80'
+        environment:
+            - PMA_HOST=laravelfeap_mysql
+            - PMA_PORT=3306
+            - PMA_USER=root
+            - PMA_PASSWORD=root_password
+    
+    cntnr_laravelfeap_redis:
+        image: redis:latest
+        container_name: laravelfeap_redis
+        hostname: laravelfeap_redis
+        restart: always
+        command: ["redis-server", "--appendonly", "yes"]
+        ports:
+            - '8014:6379'
+        volumes:
+            - './redis/data:/data'
+    
+    cntnr_laravelfeap_memcached:
+        image: memcached:latest
+        container_name: laravelfeap_memcached
+        hostname: laravelfeap_memcached
+        restart: always
+        ports:
+            - '8015:11211'
